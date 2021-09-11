@@ -1,27 +1,28 @@
 const db = require("../../data/dbConfig");
 
 async function findProjects() {
-  const projectsRes = await db("projects");
-  const projectsMapped = projectsRes.map((proj) => {
+  const projects = await db("projects");
+  return projects.map((project) => {
     return {
-      project_name: proj.project_name,
-      project_description: proj.project_description,
-      project_completed: proj.project_completed != 1 ? false : true,
+      ...project,
+      project_completed: !!project.project_completed,
     };
   });
-
-  return projectsMapped;
 }
 
 async function postProjects(project) {
-  const id = await db("projects").insert(project);
-  const thisProject = {
-    project_id: id,
-    project_name: project.project_name,
-    project_description: project.project_description,
-    project_completed: project.project_completed != 1 ? false : true,
+  const newProject = await db("projects").insert(project);
+  const Project = await getById(newProject);
+  return {
+    ...Project[0],
+    project_completed: !!Project[0].project_completed,
   };
-  return thisProject;
 }
 
-module.exports = { findProjects, postProjects,};
+const getById = (project_id) => {
+  return db("projects").where({ project_id: Number(project_id) });
+};
+
+module.exports = { findProjects,
+                  postProjects,
+                  getById,};
